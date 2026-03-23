@@ -31,7 +31,7 @@ export default async function handler(req, res) {
                 input: {
                     text: text,
                     language: "ko", 
-                    speaker: "https://raw.githubusercontent.com/coqui-ai/TTS/main/tests/data/ljspeech/wavs/LJ050-0278.wav",
+                    speaker: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/jfk.wav",
                     cleanup_voice: false
                 }
             }),
