@@ -31,7 +31,7 @@ export default async function handler(req, res) {
                 input: {
                     text: text,
                     language: "ko", 
-                    speaker: "https://replicate.delivery/pbxt/Jt79w0xsT64R1JsiJ0AQoWeDpw8XhRxxTvwM6gM2/female.wav",
+                    speaker: "https://raw.githubusercontent.com/coqui-ai/TTS/main/tests/data/ljspeech/wavs/LJ050-0278.wav",
                     cleanup_voice: false
                 }
             }),
