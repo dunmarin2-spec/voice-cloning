@@ -2,68 +2,132 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-width=1.0">
-    <title>✨ AI 목소리 축하카드 ✨</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ 마법 AI 성우실 - 축하카드 ✨</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
-        body { margin: 0; font-family: 'Pretendard', sans-serif; background-color: #fdfbfb; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        h1 { color: #333; text-align: center; }
-        .card-box { width: 100%; max-width: 500px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); box-sizing: border-box; }
-        textarea { width: 100%; height: 120px; padding: 15px; font-size: 16px; border-radius: 10px; border: 2px solid #ddd; outline: none; resize: none; box-sizing: border-box; margin-bottom: 15px; }
-        button { width: 100%; background-color: #6c5ce7; color: white; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.2s; }
-        button:hover { background-color: #5b4bc4; transform: translateY(-2px); }
-        button:disabled { background-color: #aaa; cursor: not-allowed; }
-        #loading { display: none; text-align: center; color: #d32f2f; font-weight: bold; margin-top: 15px; }
+        :root { --main-color: #6c5ce7; --bg-color: #f0f2f5; }
+        body { margin: 0; font-family: 'Pretendard', sans-serif; background-color: var(--bg-color); display: flex; flex-direction: column; align-items: center; padding: 30px; color: #333; }
+        h1 { font-size: 2.5rem; font-weight: 800; color: #1e1e1e; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
+        h1 span { color: var(--main-color); }
+        p.subtitle { color: #666; margin-top: 0; margin-bottom: 40px; }
+
+        .app-container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 25px; }
+
+        /* 섹션 공통 스타일 */
+        .section-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.03); transition: 0.3s; }
+        .section-card:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(0,0,0,0.06); }
+        .section-title { font-size: 1.1rem; font-weight: 700; color: #555; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+
+        /* 1. 대본 입력 창 */
+        textarea { width: 100%; height: 120px; padding: 18px; font-size: 17px; border-radius: 12px; border: 2px solid #eaeaea; outline: none; resize: none; box-sizing: border-box; transition: 0.2s; background: #fafafa; }
+        textarea:focus { border-color: var(--main-color); background: white; box-shadow: 0 0 10px rgba(108, 92, 231, 0.1); }
+
+        /* 2. 목소리 선택 (핵심!) */
+        .voice-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .voice-option { display: none; } /* 실제 라디오 버튼은 숨김 */
+        .voice-label { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 10px; background: #fafafa; border: 2px solid #eaeaea; border-radius: 12px; cursor: pointer; transition: 0.2s; text-align: center; gap: 5px; }
+        .voice-label .icon { font-size: 2.5rem; }
+        .voice-label .name { font-weight: 700; color: #333; font-size: 1.0rem; }
+        .voice-label .desc { font-size: 0.8rem; color: #888; }
+        
+        .voice-option:checked + .voice-label { border-color: var(--main-color); background: rgba(108, 92, 231, 0.05); color: var(--main-color); }
+        .voice-option:checked + .voice-label .name { color: var(--main-color); }
+
+        /* 3. 생성 버튼 */
+        button { width: 100%; background-color: var(--main-color); color: white; border: none; padding: 18px; font-size: 19px; font-weight: 800; border-radius: 12px; cursor: pointer; transition: 0.2s; box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3); }
+        button:hover { background-color: #5b4bc4; transform: scale(1.02); }
+        button:disabled { background-color: #aaa; cursor: not-allowed; box-shadow: none; }
+
+        /* 4. 대기 및 오디오 출력 */
+        #status-area { display: none; text-align: center; padding: 20px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
+        #loading-txt { font-weight: bold; font-size: 1.1rem; color: #d32f2f; }
         #audioPlayer { width: 100%; margin-top: 20px; display: none; }
     </style>
 </head>
 <body>
 
-    <h1>🎙️ AI 목소리 축하카드 🎙️</h1>
+    <h1>🎙️ 마법 AI <span>성우실</span></h1>
+    <p class="subtitle">유명인 목소리로 특별한 축하 메시지를 만들어보십쇼!</p>
 
-    <div class="card-box">
-        <textarea id="messageInput" placeholder="여기에 읽어줄 메시지를 적어주십쇼! (예: 형님, 생일 축하드립니다!)"></textarea>
-        <button id="generateBtn">🚀 AI 목소리 생성하기</button>
+    <div class="app-container">
+        <div class="section-card">
+            <div class="section-title">✍️ 축하 대본 작성</div>
+            <textarea id="messageInput" placeholder="읽어줄 메시지를 적어주십쇼! (예: 형님, 생일 축하드립니다!)">형님, 앱 대박 나시길 기원합니다!</textarea>
+        </div>
+
+        <div class="section-card">
+            <div class="section-title">👩‍🎤 AI 성우 선택</div>
+            <div class="voice-selector">
+                <input type="radio" name="voiceSelect" id="voice1" class="voice-option" value="https://replicate.delivery/pbxt/Jt79w0xsT64R1JsiJ0AQoWeDpw8XhRxxTvwM6gM2/female.wav" checked>
+                <label for="voice1" class="voice-label">
+                    <div class="icon">👩</div>
+                    <div class="name">아나운서</div>
+                    <div class="desc">밝고 맑은 톤</div>
+                </label>
+                
+                <input type="radio" name="voiceSelect" id="voice2" class="voice-option" value="https://huggingface.co/datasets/distil-whisper/librispeech_long/resolve/main/sample_01.wav">
+                <label for="voice2" class="voice-label">
+                    <div class="icon">👨</div>
+                    <div class="name">젊은 청년</div>
+                    <div class="desc">깔끔한 표준어</div>
+                </label>
+
+                <input type="radio" name="voiceSelect" id="voice3" class="voice-option" value="https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/jfk.wav">
+                <label for="voice3" class="voice-label">
+                    <div class="icon">👴</div>
+                    <div class="name">케네디 (JFK)</div>
+                    <div class="desc">중후한 대통령</div>
+                </label>
+            </div>
+        </div>
+
+        <button id="generateBtn">🚀 AI 목소리로 녹음 시작</button>
         
-        <div id="loading">⏳ 대기 중...</div>
-        
-        <audio id="audioPlayer" controls></audio>
+        <div id="status-area">
+            <div id="loading-txt">⏳ 준비 중...</div>
+            <audio id="audioPlayer" controls></audio>
+        </div>
     </div>
 
     <script>
         const messageInput = document.getElementById('messageInput');
         const generateBtn = document.getElementById('generateBtn');
-        const loading = document.getElementById('loading');
+        const statusArea = document.getElementById('status-area');
+        const loadingTxt = document.getElementById('loading-txt');
         const audioPlayer = document.getElementById('audioPlayer');
 
         generateBtn.addEventListener('click', async () => {
             const text = messageInput.value.trim();
             if (!text) return alert("메시지를 먼저 적어주십쇼!");
 
+            // 🚨 [핵심!] 화면에서 사용자가 체크한 목소리 URL을 가져옵니다.
+            const selectedSpeakerUrl = document.querySelector('input[name="voiceSelect"]:checked').value;
+
+            // UI 초기화
             audioPlayer.style.display = 'none';
-            loading.style.display = 'block';
-            loading.innerText = "🚀 AI가 대본을 녹음하는 중입니다...";
+            statusArea.style.display = 'block';
+            loadingTxt.innerText = "🚀 AI가 녹음실에 들어가는 중입니다...";
+            loadingTxt.style.color = '#d32f2f';
             generateBtn.disabled = true;
 
             try {
-                // 1. 서버에 대본 주문 넣기 (방금 만든 voice.mjs 호출)
+                // 1. 서버에 주문 넣기 (대본 + 목소리 URL을 같이 보냅니다!)
                 const startResponse = await fetch('/api/voice', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: text })
+                    body: JSON.stringify({ text: text, speakerUrl: selectedSpeakerUrl })
                 });
                 
                 let prediction = await startResponse.json();
 
                 if (!startResponse.ok || prediction.error) {
-                    let errorMsg = prediction.detail ? JSON.stringify(prediction.detail) : (prediction.error || "알 수 없는 에러");
-                    throw new Error("주문 거절됨: " + errorMsg);
+                    throw new Error("주문 거절됨: " + (prediction.error || "알 수 없는 에러"));
                 }
 
-                // 2. 3초마다 녹음 다 됐는지 확인 (형님이 마스터하신 그 폴링 로직!)
+                // 2. 3초마다 폴링 (형님의 마스터 기술!)
                 while (prediction.status !== "succeeded" && prediction.status !== "failed") {
                     await new Promise(r => setTimeout(r, 3000)); 
-                    
-                    loading.innerText = `⏳ 녹음 진행 중... (상태: ${prediction.status})`;
                     
                     const pollResponse = await fetch('/api/voice', {
                         method: 'POST',
@@ -73,24 +137,23 @@
                     
                     prediction = await pollResponse.json();
 
-                    if (!pollResponse.ok) {
-                        let errorMsg = prediction.detail ? JSON.stringify(prediction.detail) : (prediction.error || "알 수 없는 에러");
-                        throw new Error("확인 중 오류: " + errorMsg);
-                    }
+                    if (!pollResponse.ok) throw new Error("확인 중 오류: " + prediction.error);
                 }
 
-                // 3. 녹음 완료 시 플레이어에 띄우기
+                // 3. 녹음 완료
                 if (prediction.status === "succeeded") {
-                    audioPlayer.src = prediction.output; // 결과물(오디오 파일 URL)을 플레이어에 넣기
+                    loadingTxt.innerText = "🎉 녹음 완료! 아래에서 들어보십쇼.";
+                    loadingTxt.style.color = '#388e3c';
+                    audioPlayer.src = prediction.output; 
                     audioPlayer.style.display = 'block';
                 } else {
-                    throw new Error("녹음을 망쳤습니다. 상태: " + prediction.status);
+                    throw new Error("AI가 녹음을 망쳤습니다. 상태: " + prediction.status);
                 }
 
             } catch (error) {
                 alert("통신 실패!\n원인: " + error.message);
+                statusArea.style.display = 'none';
             } finally {
-                loading.style.display = 'none';
                 generateBtn.disabled = false;
             }
         });
