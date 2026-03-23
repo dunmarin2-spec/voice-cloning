@@ -15,10 +15,10 @@ export default async function handler(req, res) {
             return res.status(200).json(prediction);
         }
 
-        const { text } = req.body;
+        // 🚨 [수정 포인트] 프론트엔드에서 보낸 'speakerUrl'을 추가로 받습니다.
+        const { text, speakerUrl } = req.body;
         if (!text) return res.status(400).json({ error: "텍스트를 입력해주세요!" });
 
-        // 🚨 [수정 완료] 404 에러를 뱉던 주소 대신, 가장 확실한 정석 주소로 뚫습니다!
         const response = await fetch("https://api.replicate.com/v1/predictions", {
             method: "POST",
             headers: {
@@ -26,12 +26,13 @@ export default async function handler(req, res) {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                // 🚨 XTTS-v2(목소리 모델)의 가장 쌩쌩하고 검증된 공식 버전 번호입니다!
+                // XTTS-v2 공식 버전
                 version: "684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e",
                 input: {
                     text: text,
                     language: "ko", 
-                    speaker: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/jfk.wav",
+                    // 🚨 [수정 포인트] 하드코딩된 주소 대신, 사용자가 화면에서 선택한 주소를 넣습니다!
+                    speaker: speakerUrl || "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/jfk.wav", // 혹시 안 넘어오면 JFK로 기본값
                     cleanup_voice: false
                 }
             }),
